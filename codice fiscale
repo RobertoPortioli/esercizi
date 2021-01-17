@@ -1,0 +1,162 @@
+from openpyxl import load_workbook
+
+vocali="IUOAE"
+mesed={1:"A",2:"B",3:"C",4:"D",5:"E",6:"H",7:"L",8:"M",9:"P",10:"R",11:"S",12:"T"}
+
+
+
+# INSERISCO IL COGNOME E LO FORZO MAIUSCOLO
+cognome=input("Cognome : ")
+nome=input("Nome : ")
+data=input("data di nascita : ")
+sesso=input("Sesso (F/M) :")
+comu=input("Comune :")
+# cerco il codice del comune in un file  excel
+cartel=load_workbook(filename="codcomuni.xlsx")
+foglio=cartel["comune"]
+rig=2
+prima=foglio.cell(rig,2).value
+while prima!=0:
+    #print(foglio.cell(rig,1).value)
+    #print(foglio.cell(rig,2).value)
+    rig=rig+1
+    prima=foglio.cell(rig,1).value
+    if prima==comu:
+        comunefiscale= foglio.cell(rig,2).value
+        break
+
+
+# CONTO QUANTE VOCALI CONTIENE E QUANTO E LUNGO IL COGNOME
+if cognome.isupper() !=True:
+    cognome=cognome.upper()
+co=0
+vo=0
+cons=""
+vocogn=""
+vocnom=""
+for n in cognome:
+    #print (n)
+    vo=0
+    for c in vocali:
+        vo=vo+1
+        
+        if n==c or n=="E":
+            vocogn=vocogn+n
+            break
+    if vo==5:
+        cons=cons+n
+
+if len(cons)>2:
+    conscogn=cons[0]+cons[1]+cons[2]
+elif len(cons)==2:
+    conscogn=cons[0]+cons[1]+vocogn[0]
+elif len(cons)+len(vocogn)==2:
+    conscogn=cons[0]+vocogn[0]+"X"
+
+
+#print (conscogn) # stampa delle 3 lettere del cogn
+
+
+
+#-----------------------------------------------------------------
+if nome.isupper() !=True:
+    nome=nome.upper()
+cons=0
+co=0
+vo=0
+consn=""
+consnom=""
+for f in nome:
+    #print (n)
+    vo=0
+    for g in vocali:
+        vo=vo+1
+        #print (n,c,vo)
+        if f==g or f=="E":
+            vocnom=vocnom+f            
+            break
+    if vo==5:
+        consn=consn+f
+if len(consn)>3:
+    consnom=consn[0]+consn[2]+consn[3]
+if len(consn)==3:
+    consnom=consn[0]+consn[1]+consn[2]
+if len(consn)==2:
+    consnom=consn[0]+consn[1]+vocnom[0]
+if len(consn)==1 and len(vocnom)>=2:
+    consnom=consn[0]+vocnom[0]+vocnom[1]
+if len(consn)==1 and len(vocnom):
+    consnom=consn[0]+vocnom[0]+"X"
+
+print (consnom) # tre lettere fiscali del nome
+giornofisc=int(data[0:2]) #giorno fiscale maschio
+mese=int(data[3:5])
+mesefisc=mesed[mese] # mese fiscale
+if sesso=="f" or sesso=="F":
+    giornofisc=giornofisc+40 #giorno fiscale se femmina
+annofisc=data[-2]+data[-1]
+
+
+
+codicecompleto=conscogn+consnom+annofisc+str(mesefisc)+str(giornofisc)+comunefiscale
+
+print (codicecompleto)
+# calcolo la lettera di controllo------------
+
+pippo=list(codicecompleto)
+#print (pippo)
+
+fogliopa=cartel["controllopari"]
+contopari=0
+pa=2
+li=1
+pippo=""
+for d in range(1,len(codicecompleto),2):
+    pippo=pippo+codicecompleto[d]
+
+for le in pippo:
+    
+    for n in range(2,38):
+        seconda=fogliopa.cell(n,2).value
+        prima=fogliopa.cell(n,1).value
+        if le==str(prima):
+            
+            contopari=contopari+int(seconda)
+            
+    li=li+2
+
+# calcolo il valore delle cifre e lettere in posto dispari
+fogliopa=cartel["controllodispari"]
+contodispari=0
+pa=2
+li=1
+pippo=""
+for d in range(0,len(codicecompleto),2):
+    pippo=pippo+codicecompleto[d]
+    
+
+for le in pippo:
+    
+    for n in range(1,37):
+        seconda=fogliopa.cell(n,2).value
+        prima=fogliopa.cell(n,1).value
+        
+        if le==str(prima):
+            contodispari=contodispari+int(seconda)
+            
+
+    li=li+2
+
+totale=contopari+contodispari
+
+resto=totale-(int(totale/26)*26)
+
+fogliolet=cartel["ultimalettera"]
+
+
+for x in range(resto+1):
+    se=fogliolet.cell(x+1,1).value
+
+
+codicecompleto=codicecompleto+se
+print(codicecompleto)
